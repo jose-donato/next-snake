@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useInterval from '@use-it/interval'
 import Head from 'components/Head'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { useSwipeable } from "react-swipeable";
 
 export default function SnakeGame () {
   // Canvas Settings
@@ -209,17 +210,51 @@ export default function SnakeGame () {
       }
     }
 
+    
+
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [previousVelocity])
 
+
+  const handleSwiping = (direction) => {
+    let velocity = {}
+    switch(direction) {
+      case 'right':
+        velocity = { dx: 1, dy: 0 }
+        break
+      case 'left':
+        velocity = { dx: -1, dy: 0 }
+        break
+      case 'down':
+        velocity = { dx: 0, dy: 1 }
+        break
+      case 'up':
+        velocity = { dx: 0, dy: -1 }
+        break
+    }
+    if (!((previousVelocity.dx + velocity.dx === 0)
+        && (previousVelocity.dy + velocity.dy === 0))) {
+      setVelocity(velocity)
+    }
+  }
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => handleSwiping("left"),
+    onSwipedRight: () => handleSwiping("right"),
+    onSwipedUp: () => handleSwiping("up"),
+    onSwipedDown: () => handleSwiping("down"),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true
+  });
   return (
     <>
       <Head />
       <main>
         <canvas
+          {...handlers}
           ref={canvasRef}
           width={canvasWidth + 1}
           height={canvasHeight + 1}
@@ -233,7 +268,10 @@ export default function SnakeGame () {
             <button onClick={startGame}>{ countDown === 4 ? 'Start Game' : countDown}</button> :
             <div className='controls'>
               <p>How to Play?</p>
+              <div className=''>
               <p><FontAwesomeIcon icon={['fas', 'arrow-up']} /><FontAwesomeIcon icon={['fas', 'arrow-right']} /><FontAwesomeIcon icon={['fas', 'arrow-down']} /><FontAwesomeIcon icon={['fas', 'arrow-left']} /></p>
+              <p>Or swipe on <FontAwesomeIcon icon={['fas', 'mobile-alt']} /></p>
+              </div>
             </div>
           }
         </section>
@@ -246,6 +284,7 @@ export default function SnakeGame () {
             { (!running && isLost) && <button onClick={startGame}>{ countDown === 4 ? 'Restart Game' : countDown}</button> }
           </div>
         }
+        
       </main>
       <footer>
         Copyright &copy; <a href='https://mueller.dev'>Marc Müller</a> 2020 &nbsp;|&nbsp; <a href='https://github.com/marcmll/next-snake'><FontAwesomeIcon icon={['fab', 'github']} /> Github</a> 
